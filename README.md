@@ -21,7 +21,7 @@ The code uses the pretrained models to predict by default, you should be able to
   
   - Download and import the ipynb file in Colab
   - Add the [indianpines-hyperspectral.zip](https://drive.google.com/file/d/1bdYy7yCo48XzqdRRr_ZwmrKCyZFwPLfG/view?usp=sharing)  dataset zip file to the drive root.
-  - Also, add the pretrained models to models/ folder in your drive.
+  - Also, add the pretrained models to `models/` folder in your drive.
   
   
 
