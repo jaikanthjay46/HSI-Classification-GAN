@@ -213,21 +213,6 @@ gan_model.compile(loss=['binary_crossentropy', 'sparse_categorical_crossentropy'
 
 train(generator, discriminator, gan_model, latent_dim)
 
-#testing 
-GANx = define_discriminator()
-GANx.load_weights('models/best_3dGAN.h5')
 
-label_image = GANx.predict( X_train )
-label_image = np.array(label_image[1])
-y = []
-for t in label_image:
-  y.append(np.argmax(t))
-label_image = np.array(y).reshape(145,145)
-image_label_overlay = label2rgb(label_image)
-fig, (ax1, ax2)  = plt.subplots(2,figsize=(10, 10))
-
-ax1.imshow(image_label_overlay)
-image_label_overlay = label2rgb(fullDataY.reshape(145,145))
-ax2.imshow(image_label_overlay)
 
 

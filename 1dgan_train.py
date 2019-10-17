@@ -191,24 +191,5 @@ train(generator, discriminator, gan_model, latent_dim)
 
 
 
-#testing phase
-GAN = define_discriminator()
-GAN.load_weights("model_0698.h5")
-
-label_image = GAN.predict( fullDataX.to_numpy().reshape(145*145,10,1) )
-label_image = np.array(label_image[1])
-y = []
-for t in label_image:
-  y.append(np.argmax(t))
-label_image = np.array(y).reshape(145,145)
-image_label_overlay = label2rgb(label_image)
-fig, (ax1, ax2, ax3)  = plt.subplots(3,figsize=(10, 10))
-
-ax1.imshow(image_label_overlay)
-image_label_overlay = label2rgb(fullDataY.to_numpy().reshape(145,145))
-ax2.imshow(image_label_overlay)
-image_label_overlay = label2rgb(clf.predict(fullDataX.to_numpy()).reshape(145,145)  )
-ax3.imshow(image_label_overlay)
-
 
 
