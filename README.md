@@ -1,5 +1,5 @@
 # HSI-Classification-GAN
-A implementation of HSI Classification using GANs
+An implementation of HSI Classification using GANs
 There are two kinds of GAN implemented, 1D GAN uses only spectral features, and 3D GAN uses both spatial and spectral features.
 To run the code locally, install the required dependencies (Keras, scikit-learn, patchify, numpy, pandas),
 
