@@ -148,6 +148,14 @@ paddedDatax = cv2.copyMakeBorder( fullDataX, 32, 31, 32, 31, cv2.BORDER_REPLICAT
 
 X_train = patchify(paddedDatax, (64, 64, 3), step=1).reshape(-1,64,64,3)
 y_train = fullDataY.reshape(-1,)
+X_train, X_test, y_train, y_test = train_test_split(X_train, y_train, test_size=0.50)
+
+def generate_real_test_samples(n_samples):
+	images, labels =  X_test, y_test
+	ix = randint(0, images.shape[0], n_samples)
+	X, labels = images[ix], labels[ix]
+	y = ones((n_samples, 1))
+	return [X, labels], y
 
 def generate_real_samples(n_samples):
 	images, labels =  X_train, y_train
@@ -169,36 +177,54 @@ def generate_fake_samples(generator, latent_dim, n_samples):
 	return [images, labels_input], y
 
 def summarize_performance(step, g_model, latent_dim):
-	filename = 'models/3dmodel_%04d.h5' % (step+1)
+	filename = 'model_%04d.h5' % (step+1)
 	g_model.save_weights(filename)
+	!cp -f *.h5 /content/drive/My\ Drive/models	
 
 def train(g_model, d_model, gan_model, latent_dim, n_epochs=600, n_batch=4096):
 	import warnings
 	warnings.filterwarnings("ignore")
-	bat_per_epo = int(20000 / n_batch)
+	bat_per_epo = int(10000 / n_batch)
 	n_steps = bat_per_epo * n_epochs
 	half_batch = int(n_batch / 2)
 	prev_acc1 = 0.20
-	for i in range(n_steps):
+	i = 0
+	while True:
 		[X_real, labels_real], y_real = generate_real_samples( half_batch)
 		
 		d_loss_real = d_model.train_on_batch(X_real, [y_real, labels_real])
 		[X_fake, labels_fake], y_fake = generate_fake_samples(g_model, latent_dim, half_batch)
-		print(labels_real.shape)
 		d_loss_fake = d_model.train_on_batch(X_fake, [y_fake, labels_fake])
 		d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
 		[z_input, z_labels] = generate_latent_points(latent_dim, half_batch)
 		y_gan = ones((half_batch, 1))
-		print(z_input.shape, z_labels.shape ,z_labels.shape)
 		g_loss = gan_model.train_on_batch([z_input, z_labels], [y_gan, z_labels])
 		op_acc = d_loss[4]
+		trainHist.append([d_loss,g_loss])
 		print ("Training Metrics: %d [D loss: %f, acc.: %.2f%%, op_acc: %.2f%%] [G loss: %f]" % (i, d_loss[0], 100*d_loss[3], 100*d_loss[4], g_loss[0]))
 
-		if d_loss[4] > prev_acc1:
-			prev_acc1 = d_loss[4]
+		[X_treal, labels_treal], y_treal = generate_real_test_samples(half_batch)
+		d_loss_real = d_model.test_on_batch(X_treal, [y_treal, labels_treal])
+	
+		[X_fake, labels_fake], y_fake = generate_fake_samples(g_model, latent_dim, half_batch)
+		d_loss_fake = d_model.test_on_batch(X_fake, [y_fake, labels_fake])
+		d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
+		
+
+		[z_input, z_labels] = generate_latent_points(latent_dim, n_batch)
+		y_gan = ones((n_batch, 1))
+		g_loss = gan_model.test_on_batch([z_input, z_labels], [y_gan, z_labels])
+		validationHist.append([d_loss,g_loss])
+		print ("Validation Metrics: %d [D loss: %f, acc.: %.2f%%, op_acc: %.2f%%] [G loss: %f]" % (i, d_loss[0], 100*d_loss[3], 100*d_loss[4], g_loss[0]))
+		
+		if (op_acc > 0.95 and d_loss[4] > 0.95) or i > 6000:
+			prev_acc1 = op_acc
+			prev_acc2 = d_loss[4]
 			summarize_performance(i, d_model, latent_dim)
-		# if (i+1) % (bat_per_epo * 10) == 0:
-		# 	summarize_performance(i, d_model, latent_dim)
+			break
+		if (i+1) % (bat_per_epo * 10) == 0:
+			summarize_performance(i, d_model, latent_dim)
+		i += 1
 
 latent_dim = 100
 discriminator = define_discriminator()
